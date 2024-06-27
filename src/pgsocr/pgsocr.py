@@ -17,14 +17,15 @@ def preprocess_image(im):
     return im.convert("RGB")
 
 
-def sup2srt(in_path, out_path, tessdata_path):
+def sup2srt(in_path, out_path, tessdata_path, languages):
     if in_path.suffix != ".sup":
         print("File is not a SUP file, skipping")
         return
     supfile = PGStream(in_path)
     srtfile = open(f"{str(out_path)}/{in_path.stem}.srt", "a")
     print(f"Converting {supfile.file_name}...")
-    with PyTessBaseAPI(path=tessdata_path, lang="eng") as api:
+    langstring = "+".join(l for l in languages)
+    with PyTessBaseAPI(path=tessdata_path, lang=langstring) as api:
         api.SetVariable("debug_file", os.devnull)
         seq_num = 1
         for img, start, end in extract_images(supfile):
@@ -45,15 +46,18 @@ if __name__ == "__main__":
     )
     parser.add_argument("-o", help="Specify the path to the output directory.")
     parser.add_argument("-t", help="Specify the path to the tessdata directory.")
+    parser.add_argument("-l", help="Specify the languages to be used.")
     args = parser.parse_args()
 
     tesspath = Path(args.t)
-    if (
-        not tesspath.exists()
-        or not tesspath.is_dir()
-        or not list(tesspath.glob("*.traineddata"))
-    ):
+    if not tesspath.exists() or not tesspath.is_dir():
         print("Invalid tessdata path specified.")
+        exit(1)
+    langfiles = list(map(lambda x: x.name, tesspath.glob("*.traineddata")))
+    if not langfiles:
+        print(
+            "No language packs found, please make sure you have specified the correct tessdata path."
+        )
         exit(1)
 
     inp = Path(args.i)
@@ -61,9 +65,22 @@ if __name__ == "__main__":
         print("File not found, make sure you have specified the correct path.")
         exit(1)
 
+    if args.l:
+        langs = [s.strip() for s in args.l.split(",")]
+    else:
+        print("No language specified, defaulting to English...")
+        langs = ["eng"]
+    for l in langs:
+        if f"{l}.traineddata" not in langfiles:
+            print(
+                f"Failed to load language '{l}', make sure you have specified the correct language code"
+                " and that the corresponding Tesseract language pack is installed on your system."
+            )
+            exit(1)
+
     if inp.is_file():
-        sup2srt(inp, args.o, args.t)
+        sup2srt(inp, args.o, args.t, langs)
     elif inp.is_dir():
         for x in inp.iterdir():
-            sup2srt(x, args.o, args.t)
+            sup2srt(x, args.o, args.t, langs)
     exit(0)

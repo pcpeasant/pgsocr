@@ -3,7 +3,7 @@ Convert Blu-Ray SUP subtitles to SRT using Tesseract.
 
 ### Tesseract Installation
 
-See: https://tesseract-ocr.github.io/tessdoc/Installation.html\
+See: https://tesseract-ocr.github.io/tessdoc/Installation.html \
 Make sure to install all the required language packs and note down the location of the 'tessdata' directory since it must be supplied manually to pgsocr.
 
 ### Usage:

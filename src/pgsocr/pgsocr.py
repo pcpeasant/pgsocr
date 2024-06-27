@@ -17,14 +17,14 @@ def preprocess_image(im):
     return im.convert("RGB")
 
 
-def sup2srt(in_path, out_path):
+def sup2srt(in_path, out_path, tessdata_path):
     if in_path.suffix != ".sup":
         print("File is not a SUP file, skipping")
         return
     supfile = PGStream(in_path)
     srtfile = open(f"{str(out_path)}/{in_path.stem}.srt", "a")
     print(f"Converting {supfile.file_name}...")
-    with PyTessBaseAPI(path="/usr/share/tessdata", lang="eng") as api:
+    with PyTessBaseAPI(path=tessdata_path, lang="eng") as api:
         api.SetVariable("debug_file", os.devnull)
         seq_num = 1
         for img, start, end in extract_images(supfile):
@@ -44,17 +44,26 @@ if __name__ == "__main__":
         help="Specify the path to the SUP file or (batch mode) directory.",
     )
     parser.add_argument("-o", help="Specify the path to the output directory.")
+    parser.add_argument("-t", help="Specify the path to the tessdata directory.")
     args = parser.parse_args()
 
-    inp = Path(args.i)
+    tesspath = Path(args.t)
+    if (
+        not tesspath.exists()
+        or not tesspath.is_dir()
+        or not list(tesspath.glob("*.traineddata"))
+    ):
+        print("Invalid tessdata path specified.")
+        exit(1)
 
+    inp = Path(args.i)
     if not inp.exists():
         print("File not found, make sure you have specified the correct path.")
         exit(1)
 
     if inp.is_file():
-        sup2srt(inp, args.o)
+        sup2srt(inp, args.o, args.t)
     elif inp.is_dir():
         for x in inp.iterdir():
-            sup2srt(x, args.o)
+            sup2srt(x, args.o, args.t)
     exit(0)

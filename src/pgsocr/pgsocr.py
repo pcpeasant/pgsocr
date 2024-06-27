@@ -23,8 +23,25 @@ def sup2srt(in_path, out_path, tessdata_path, languages):
         return
     supfile = PGStream(in_path)
     srtfile = open(f"{str(out_path)}/{in_path.stem}.srt", "a")
-    print(f"Converting {supfile.file_name}...")
+    tesspath = Path(tessdata_path)
+    if not tesspath.exists() or not tesspath.is_dir():
+        print("Invalid tessdata path specified.")
+        exit(1)
+    langfiles = list(map(lambda x: x.name, tesspath.glob("*.traineddata")))
+    if not langfiles:
+        print(
+            "No language packs found, please make sure you have specified the correct tessdata path."
+        )
+        exit(1)
+    for l in languages:
+        if f"{l}.traineddata" not in langfiles:
+            print(
+                f"Failed to load language '{l}', make sure you have specified the correct language code"
+                " and that the corresponding Tesseract language pack is installed on your system."
+            )
+            exit(1)
     langstring = "+".join(l for l in languages)
+    print(f"Converting {supfile.file_name}...")
     with PyTessBaseAPI(path=tessdata_path, lang=langstring) as api:
         api.SetVariable("debug_file", os.devnull)
         seq_num = 1
@@ -43,26 +60,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "-i",
         help="Specify the path to the SUP file or (batch mode) directory.",
+        required=True,
     )
-    parser.add_argument("-o", help="Specify the path to the output directory.")
-    parser.add_argument("-t", help="Specify the path to the tessdata directory.")
+    parser.add_argument(
+        "-o", help="Specify the path to the output directory.", required=True
+    )
+    parser.add_argument(
+        "-t", help="Specify the path to the tessdata directory.", required=True
+    )
     parser.add_argument("-l", help="Specify the languages to be used.")
     args = parser.parse_args()
 
-    tesspath = Path(args.t)
-    if not tesspath.exists() or not tesspath.is_dir():
-        print("Invalid tessdata path specified.")
-        exit(1)
-    langfiles = list(map(lambda x: x.name, tesspath.glob("*.traineddata")))
-    if not langfiles:
-        print(
-            "No language packs found, please make sure you have specified the correct tessdata path."
-        )
-        exit(1)
-
     inp = Path(args.i)
     if not inp.exists():
-        print("File not found, make sure you have specified the correct path.")
+        print("Input file not found, make sure you have specified the correct path.")
+        exit(1)
+    op = Path(args.o)
+    if not op.exists() or not op.is_dir():
+        print(
+            "Output directory not found, make sure you have specified the correct path."
+        )
         exit(1)
 
     if args.l:
@@ -70,13 +87,6 @@ if __name__ == "__main__":
     else:
         print("No language specified, defaulting to English...")
         langs = ["eng"]
-    for l in langs:
-        if f"{l}.traineddata" not in langfiles:
-            print(
-                f"Failed to load language '{l}', make sure you have specified the correct language code"
-                " and that the corresponding Tesseract language pack is installed on your system."
-            )
-            exit(1)
 
     if inp.is_file():
         sup2srt(inp, args.o, args.t, langs)

@@ -12,7 +12,8 @@ Make sure to install all the required language packs and note down the location 
     -i: Specify the path to the SUP file or (batch mode) directory.
     -o: Specify the path to the output directory.
     -t: Specify the path to the tessdata directory.
-    -l: Specify the list of languages to use separated by commas (Uses English if unspecified)
+    -l: Specify the list of languages to use separated by commas (Uses English if unspecified).
+    -b: Specify a custom character blacklist for Tesseract (Enter an empty string to turn off the default blacklist).
 
     Examples:
     # Single file

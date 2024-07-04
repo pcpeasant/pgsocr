@@ -72,7 +72,9 @@ if __name__ == "__main__":
         "-t", help="Specify the path to the tessdata directory.", required=True
     )
     parser.add_argument("-l", help="Specify the languages to be used.", default="eng")
-    parser.add_argument("-b", help="Specify a custom character blacklist", default="|")
+    parser.add_argument(
+        "-b", help="Specify a custom character blacklist", default="|`´‘’“”"
+    )
     args = parser.parse_args()
 
     inp = Path(args.i)

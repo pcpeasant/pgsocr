@@ -50,7 +50,6 @@ def sup2srt(in_path, out_path, tessdata_path, languages, blacklist=None):
         for img, start, end in extract_images(supfile):
             api.SetImage(preprocess_image(img))
             ocred_text = api.GetUTF8Text()
-            print(ocred_text)
             srtfile.write(
                 f"{seq_num}\n{generate_timecode(start)} --> {generate_timecode(end)}\n{ocred_text}\n\n"
             )

@@ -17,7 +17,7 @@ def preprocess_image(im):
     return im.convert("RGB")
 
 
-def sup2srt(in_path, out_path, tessdata_path, languages):
+def sup2srt(in_path, out_path, tessdata_path, languages, blacklist=None):
     if in_path.suffix != ".sup":
         print("File is not a SUP file, skipping")
         return
@@ -44,11 +44,15 @@ def sup2srt(in_path, out_path, tessdata_path, languages):
     print(f"Converting {supfile.file_name}...")
     with PyTessBaseAPI(path=tessdata_path, lang=langstring) as api:
         api.SetVariable("debug_file", os.devnull)
+        if blacklist:
+            api.SetVariable("tessedit_char_blacklist", blacklist)
         seq_num = 1
         for img, start, end in extract_images(supfile):
             api.SetImage(preprocess_image(img))
+            ocred_text = api.GetUTF8Text()
+            print(ocred_text)
             srtfile.write(
-                f"{seq_num}\n{generate_timecode(start)} --> {generate_timecode(end)}\n{api.GetUTF8Text()}\n\n"
+                f"{seq_num}\n{generate_timecode(start)} --> {generate_timecode(end)}\n{ocred_text}\n\n"
             )
             seq_num += 1
 
@@ -68,7 +72,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t", help="Specify the path to the tessdata directory.", required=True
     )
-    parser.add_argument("-l", help="Specify the languages to be used.")
+    parser.add_argument("-l", help="Specify the languages to be used.", default="eng")
+    parser.add_argument("-b", help="Specify a custom character blacklist", default="|")
     args = parser.parse_args()
 
     inp = Path(args.i)
@@ -82,15 +87,11 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    if args.l:
-        langs = [s.strip() for s in args.l.split(",")]
-    else:
-        print("No language specified, defaulting to English...")
-        langs = ["eng"]
+    langs = [s.strip() for s in args.l.split(",")]
 
     if inp.is_file():
-        sup2srt(inp, args.o, args.t, langs)
+        sup2srt(inp, args.o, args.t, langs, args.b)
     elif inp.is_dir():
         for x in inp.iterdir():
-            sup2srt(x, args.o, args.t, langs)
+            sup2srt(x, args.o, args.t, langs, args.b)
     exit(0)

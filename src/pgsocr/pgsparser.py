@@ -282,4 +282,5 @@ class PGStream:
                     ep.append(Epoch(cur))
                 cur = []
             cur.append(ds)
+        ep.append(Epoch(cur))
         return ep

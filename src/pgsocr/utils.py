@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from PIL import Image
+from PIL import Image, ImageOps
 import warnings
 from pgsparser import *
 from typing import Generator
@@ -101,8 +101,21 @@ def make_image(
     return img
 
 
+def preprocess_image(im: Image.Image) -> Image.Image:
+    canvas = Image.new("RGB", (1000, 1000), (0, 0, 0))
+    im_text = im.convert("RGB")
+    # im_text = im_text.point(lambda p: 255 if p > 127 else 0)
+    im_text.thumbnail((750, 750), resample=Image.LANCZOS)
+    bg_width, bg_height = canvas.size
+    fg_width, fg_height = im_text.size
+    position = ((bg_width - fg_width) // 2, (bg_height - fg_height) // 2)
+    canvas.paste(im_text, position)
+    canvas = ImageOps.invert(canvas)
+    return canvas
+
+
 def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
-    cur_pcs = -1
+    seen_pcs = set()
     for e in pgsobj.epochs:
         ods_cache = {}
         pds_cache = {}
@@ -123,13 +136,12 @@ def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
             #         win_cache[winobj.id] = winobj
 
             pcs = ds.pcs[0]
-            if cur_pcs == -1:
-                cur_pcs = pcs.composition_number
             cur_pts = pcs.presentation_timestamp
             pds_to_use = pds_cache[ds.pcs[0].palette_id]
 
             ods_in_ds = set()
-            if pcs.composition_number == cur_pcs:
+            if pcs.composition_number not in seen_pcs:
+                seen_pcs.add(pcs.composition_number)
                 for comp in pcs.composition_objects:
                     ods_to_use = ods_cache[comp.object_id]
                     ods_in_ds.add(ods_to_use)
@@ -149,4 +161,9 @@ def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
                         yield img, v[1], cur_pts
                         del screen[k]
 
-                cur_pcs += 1
+
+def generate_timecode(millis: int) -> str:
+    seconds, milliseconds = divmod(millis, 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"

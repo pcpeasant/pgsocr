@@ -12,6 +12,7 @@ Make sure to set the TESSDATA_PREFIX environment variable to the location of the
     Options:
     -i: Specify the path to the SUP file or (batch mode) directory.
     -o: Specify the path to the output directory.
+    -m: Specify the OCR engine to use (phi3v or tesseract).
     -l: (Only if using Tesseract) Specify the list of languages to use separated by commas. Defaults to English.
     -b: (Only if using Tesseract) Specify a custom character blacklist for Tesseract. Enter an empty string to turn off the default blacklist.
 

@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-import ocr_engines
 from supconvert import sup2srt
 
 if __name__ == "__main__":
@@ -39,9 +38,13 @@ if __name__ == "__main__":
     langs = [s.strip() for s in args.l.split(",")]
 
     if args.m == "tesseract":
-        engine = ocr_engines.TesseractOCREngine(langs, args.b)
+        from tesseract_ocr_engines import TesseractOCREngine
+
+        engine = TesseractOCREngine(langs, args.b)
     elif args.m == "phi3v":
-        engine = ocr_engines.Phi3OCREngine2()
+        from llm_ocr_engines import Phi3OCREngine
+
+        engine = Phi3OCREngine()
 
     if inp.is_file():
         sup2srt(inp, args.o, engine)

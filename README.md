@@ -1,5 +1,5 @@
 # pgsocr
-Convert Blu-Ray SUP subtitles to SRT using Tesseract.
+Convert Blu-Ray SUP subtitles to SRT using Tesseract or LLMs.
 
 ### Tesseract Installation
 

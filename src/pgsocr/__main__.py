@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
-from supconvert import sup2srt
+import sys
+from .supconvert import sup2srt
 
 def main():
     parser = argparse.ArgumentParser(prog="pgsocr")

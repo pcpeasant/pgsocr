@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageOps
 import warnings
-from pgsparser import *
+from .pgsparser import *
 from typing import Generator
 
 

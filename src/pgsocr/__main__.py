@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from supconvert import sup2srt
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(prog="pgsocr")
     parser.add_argument(
         "-i",
@@ -38,11 +38,11 @@ if __name__ == "__main__":
     langs = [s.strip() for s in args.l.split(",")]
 
     if args.m == "tesseract":
-        from tesseract_ocr_engines import TesseractOCREngine
+        from .tesseract_ocr_engines import TesseractOCREngine
 
         engine = TesseractOCREngine(langs, args.b)
     elif args.m == "phi3v":
-        from llm_ocr_engines import Phi3OCREngine
+        from .llm_ocr_engines import Phi3OCREngine
 
         engine = Phi3OCREngine()
 
@@ -51,4 +51,7 @@ if __name__ == "__main__":
     elif inp.is_dir():
         for x in inp.iterdir():
             sup2srt(x, args.o, engine)
+
+if __name__ == "__main__":
+    main()
     exit(0)

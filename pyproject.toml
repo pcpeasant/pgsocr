@@ -1,0 +1,36 @@
+[project]
+name = "pgsocr"
+description = "Convert Blu-Ray SUP subtitles to SRT using Tesseract or LLMs."
+version = "0.0.1"
+authors = [
+    {name = "pcpeasant"},
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pillow>=10.0.0",
+    "mistralrs",
+    "tesserocr>=2.0.0",
+]
+classifiers=[
+        "Development Status :: 1 - Planning",
+        "Intended Audience :: End Users/Desktop",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+pgsocr = "pgsocr.__main__:main"
+
+[project.urls]
+Source = "https://github.com/pcpeasant/pgsocr"
+Tracker = "https://github.com/pcpeasant/pgsocr/issues/"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

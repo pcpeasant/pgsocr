@@ -15,7 +15,6 @@ def sup2srt(in_path: Path | str, out_path: str, ocr_engine) -> None:
     seq_num = 1
     for img, start, end in utils.extract_images(supfile):
         text = ocr_engine.get_ocr_text(utils.preprocess_image(img))
-        print(text)
         srtfile.write(
             f"{seq_num}\n{utils.generate_timecode(start)} --> {utils.generate_timecode(end)}\n{text}\n\n"
         )

@@ -25,10 +25,10 @@ class BaseSegment:
     def __init__(self, raw_bytes: bytes):
         if raw_bytes[:2] != b"PG":
             raise InvalidSegmentError
-        self.pts: int = int.from_bytes(raw_bytes[2:6]) // 90
-        self.dts: int = int.from_bytes(raw_bytes[6:10]) // 90
+        self.pts: int = int.from_bytes(raw_bytes[2:6], byteorder="big") // 90
+        self.dts: int = int.from_bytes(raw_bytes[6:10], byteorder="big") // 90
         self.type: SEGMENT_TYPE = SEGMENT_TYPE(raw_bytes[10])
-        self.size: int = int.from_bytes(raw_bytes[11:13])
+        self.size: int = int.from_bytes(raw_bytes[11:13], byteorder="big")
         self.payload: bytes = raw_bytes[13:]
 
     def __len__(self):
@@ -63,7 +63,7 @@ class ObjectDefinitionSegment(BaseSegment):
 
     def __init__(self, raw_bytes: bytes):
         super().__init__(raw_bytes)
-        self.id: int = int.from_bytes(self.payload[0:2])
+        self.id: int = int.from_bytes(self.payload[0:2], byteorder="big")
         self.version: int = self.payload[2]
         self.is_first: bool = bool(self.payload[3] & 0x80)
         self.is_last: bool = bool(self.payload[3] & 0x40)
@@ -72,9 +72,9 @@ class ObjectDefinitionSegment(BaseSegment):
         if not self.is_first:
             self.img_data: bytes = self.payload[4:]
         else:
-            self.data_len: int = int.from_bytes(self.payload[4:7])
-            self.width: int = int.from_bytes(self.payload[7:9])
-            self.height: int = int.from_bytes(self.payload[9:11])
+            self.data_len: int = int.from_bytes(self.payload[4:7], byteorder="big")
+            self.width: int = int.from_bytes(self.payload[7:9], byteorder="big")
+            self.height: int = int.from_bytes(self.payload[9:11], byteorder="big")
             self.img_data: bytes = self.payload[11:]
 
 
@@ -106,24 +106,30 @@ class PresentationCompositionSegment(BaseSegment):
 
     class CompositionObject:
         def __init__(self, raw_bytes: bytes):
-            self.object_id: int = int.from_bytes(raw_bytes[0:2])
+            self.object_id: int = int.from_bytes(raw_bytes[0:2], byteorder="big")
             self.window_id: int = raw_bytes[2]
             self.is_cropped: bool = bool(raw_bytes[3] & 0x80)
             self.is_forced: bool = bool(raw_bytes[3] & 0x40)
-            self.x_offset: bool = int.from_bytes(raw_bytes[4:6])
-            self.y_offset: int = int.from_bytes(raw_bytes[6:8])
+            self.x_offset: bool = int.from_bytes(raw_bytes[4:6], byteorder="big")
+            self.y_offset: int = int.from_bytes(raw_bytes[6:8], byteorder="big")
             if self.is_cropped:
-                self.crop_x_offset: int = int.from_bytes(raw_bytes[8:10])
-                self.crop_y_offset: int = int.from_bytes(raw_bytes[10:12])
-                self.crop_width: int = int.from_bytes(raw_bytes[12:14])
-                self.crop_height: int = int.from_bytes(raw_bytes[14:16])
+                self.crop_x_offset: int = int.from_bytes(
+                    raw_bytes[8:10], byteorder="big"
+                )
+                self.crop_y_offset: int = int.from_bytes(
+                    raw_bytes[10:12], byteorder="big"
+                )
+                self.crop_width: int = int.from_bytes(raw_bytes[12:14], byteorder="big")
+                self.crop_height: int = int.from_bytes(
+                    raw_bytes[14:16], byteorder="big"
+                )
 
     def __init__(self, raw_bytes: bytes):
         super().__init__(raw_bytes)
-        self.width: int = int.from_bytes(self.payload[0:2])
-        self.height: int = int.from_bytes(self.payload[2:4])
+        self.width: int = int.from_bytes(self.payload[0:2], byteorder="big")
+        self.height: int = int.from_bytes(self.payload[2:4], byteorder="big")
         self.frame_rate: int = self.payload[4]
-        self.num: int = int.from_bytes(self.payload[5:7])
+        self.num: int = int.from_bytes(self.payload[5:7], byteorder="big")
         self.state: COMPOSITION_STATE = COMPOSITION_STATE(self.payload[7])
         self.palette_update: bool = bool(self.payload[8])
         self.palette_id: int = self.payload[9]
@@ -159,10 +165,10 @@ class WindowDefinitionSegment(BaseSegment):
     class WindowObject:
         def __init__(self, raw_bytes: bytes):
             self.id: int = raw_bytes[0]
-            self.x_offset: int = int.from_bytes(raw_bytes[1:3])
-            self.y_offset: int = int.from_bytes(raw_bytes[3:5])
-            self.width: int = int.from_bytes(raw_bytes[5:7])
-            self.height: int = int.from_bytes(raw_bytes[7:9])
+            self.x_offset: int = int.from_bytes(raw_bytes[1:3], byteorder="big")
+            self.y_offset: int = int.from_bytes(raw_bytes[3:5], byteorder="big")
+            self.width: int = int.from_bytes(raw_bytes[5:7], byteorder="big")
+            self.height: int = int.from_bytes(raw_bytes[7:9], byteorder="big")
 
     def __init__(self, raw_bytes: bytes):
         super().__init__(raw_bytes)
@@ -244,7 +250,9 @@ class PGStream:
         segs = []
         ods_list = []
         while idx < len(self.raw_data):
-            size = 13 + int.from_bytes(self.raw_data[idx + 11 : idx + 13])
+            size = 13 + int.from_bytes(
+                self.raw_data[idx + 11 : idx + 13], byteorder="big"
+            )
             seg_type = SEGMENT_TYPE(self.raw_data[idx + 10])
             cls = self.TYPE_TO_CLASS[seg_type]
             seg_instance = cls(self.raw_data[idx : idx + size])

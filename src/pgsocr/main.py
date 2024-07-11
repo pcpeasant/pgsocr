@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from supconvert import sup2srt
+from .supconvert import sup2srt
 
 
 def main():
@@ -39,12 +39,12 @@ def main():
     langs = [s.strip() for s in args.l.split(",")]
 
     if args.m == "tesseract":
-        from tesseract_ocr_engine import TesseractOCREngine
+        from .tesseract_ocr_engine import TesseractOCREngine
 
         engine = TesseractOCREngine(langs, args.b)
 
     elif args.m == "florence2":
-        from transformer_ocr_engines import Florence2OCREngine
+        from .transformer_ocr_engines import Florence2OCREngine
 
         engine = Florence2OCREngine()
 
@@ -54,7 +54,3 @@ def main():
         for x in inp.iterdir():
             sup2srt(x, args.o, engine)
     exit(0)
-
-
-if __name__ == "__main__":
-    main()

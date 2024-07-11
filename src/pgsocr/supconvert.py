@@ -1,6 +1,6 @@
-import utils
+from . import utils
 from pathlib import Path
-from pgsparser import PGStream
+from .pgsparser import PGStream
 
 
 def sup2srt(in_path: Path | str, out_path: str, ocr_engine) -> None:

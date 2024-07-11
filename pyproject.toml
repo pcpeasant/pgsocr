@@ -1,0 +1,35 @@
+[project]
+name = "pgsocr"
+version = "0.1.0"
+description = "A command line utility for converting Blu-ray subs to SRT using AI."
+authors = [
+    {name = "pcpeasant", email = "pcpeasant25@gmail.com"},
+]
+dependencies = [
+    "pillow>=10.4.0",
+    "tesserocr>=2.7.0",
+    "numpy>=2.0.0",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+llm = [
+    "torch>=2.3.1",
+    "torchvision>=0.18.1",
+    "torchaudio>=2.3.1",
+    "transformers>=4.41.2",
+    "einops>=0.8.0",
+    "timm>=1.0.7",
+]
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[project.scripts]
+pgsocr = "pgsocr.main:main"

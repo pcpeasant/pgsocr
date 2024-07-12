@@ -38,6 +38,7 @@ def main():
 
     langs = [s.strip() for s in args.l.split(",")]
 
+    print("Loading OCR engine...")
     if args.m == "tesseract":
         from .tesseract_ocr_engine import TesseractOCREngine
 
@@ -47,7 +48,7 @@ def main():
         from .transformer_ocr_engines import Florence2OCREngine
 
         engine = Florence2OCREngine()
-
+    print("OCR engine loaded.")
     if inp.is_file():
         sup2srt(inp, args.o, engine)
     elif inp.is_dir():

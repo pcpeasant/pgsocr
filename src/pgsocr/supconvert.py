@@ -1,6 +1,7 @@
 from . import utils
 from pathlib import Path
 from .pgsparser import PGStream
+from tqdm import tqdm
 
 
 def sup2srt(in_path: Path | str, out_path: str, ocr_engine) -> None:
@@ -11,9 +12,10 @@ def sup2srt(in_path: Path | str, out_path: str, ocr_engine) -> None:
         return
     supfile = PGStream(in_path)
     srtfile = open(f"{str(out_path)}/{in_path.stem}.srt", "w")
-    print(f"Converting {supfile.file_name}...")
     seq_num = 1
-    for img, start, end in utils.extract_images(supfile):
+    for img, start, end in tqdm(
+        utils.extract_images(supfile), desc=f"{supfile.file_name}", unit="lines"
+    ):
         text = ocr_engine.get_ocr_text(utils.preprocess_image(img))
         srtfile.write(
             f"{seq_num}\n{utils.generate_timecode(start)} --> {utils.generate_timecode(end)}\n{text}\n\n"

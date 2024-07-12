@@ -49,3 +49,6 @@ class Florence2OCREngine:
         return "\n".join(
             s.replace("</s>", "").strip() for s in parsed_answer[task_prompt]["labels"]
         )
+
+    def quit(self):
+        pass

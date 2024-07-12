@@ -1,7 +1,7 @@
 [project]
 name = "pgsocr"
 version = "0.1.0"
-description = "A command line utility for converting Blu-ray subs to SRT using AI."
+description = "A command line utility for converting Blu-ray subs to SRT using AI Language Models."
 authors = [
     {name = "pcpeasant", email = "pcpeasant25@gmail.com"},
 ]

@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from .supconvert import sup2srt
+from .supconvert import sup2srt, sup2ass
 
 
 def main():
@@ -18,6 +18,12 @@ def main():
         help="Specify the OCR model to use",
         choices=["tesseract", "florence2"],
         default="tesseract",
+    )
+    parser.add_argument(
+        "-f",
+        help="Specify the output format",
+        choices=["srt", "ass"],
+        default="srt",
     )
     parser.add_argument("-l", help="Specify the languages to be used.", default="eng")
     parser.add_argument(
@@ -49,9 +55,13 @@ def main():
 
         engine = Florence2OCREngine()
     print("OCR engine loaded.")
+    if args.f == "srt":
+        convertor = sup2srt
+    elif args.f == "ass":
+        convertor = sup2ass
     if inp.is_file():
-        sup2srt(inp, args.o, engine)
+        convertor(str(inp), args.o, engine)
     elif inp.is_dir():
         for x in inp.iterdir():
-            sup2srt(x, args.o, engine)
+            convertor(str(x), args.o, engine)
     exit(0)

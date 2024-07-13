@@ -1,8 +1,10 @@
 from collections import namedtuple
 from functools import cached_property
+from dataclasses import dataclass
 import warnings
 from enum import Enum
 import os.path
+from PIL import Image
 
 
 warnings.simplefilter("always", RuntimeWarning)
@@ -110,8 +112,8 @@ class PresentationCompositionSegment(BaseSegment):
             self.window_id: int = raw_bytes[2]
             self.is_cropped: bool = bool(raw_bytes[3] & 0x80)
             self.is_forced: bool = bool(raw_bytes[3] & 0x40)
-            self.x_offset: bool = int.from_bytes(raw_bytes[4:6], byteorder="big")
-            self.y_offset: int = int.from_bytes(raw_bytes[6:8], byteorder="big")
+            self.x_pos: bool = int.from_bytes(raw_bytes[4:6], byteorder="big")
+            self.y_pos: int = int.from_bytes(raw_bytes[6:8], byteorder="big")
             if self.is_cropped:
                 self.crop_x_offset: int = int.from_bytes(
                     raw_bytes[8:10], byteorder="big"
@@ -165,8 +167,8 @@ class WindowDefinitionSegment(BaseSegment):
     class WindowObject:
         def __init__(self, raw_bytes: bytes):
             self.id: int = raw_bytes[0]
-            self.x_offset: int = int.from_bytes(raw_bytes[1:3], byteorder="big")
-            self.y_offset: int = int.from_bytes(raw_bytes[3:5], byteorder="big")
+            self.x_pos: int = int.from_bytes(raw_bytes[1:3], byteorder="big")
+            self.y_pos: int = int.from_bytes(raw_bytes[3:5], byteorder="big")
             self.width: int = int.from_bytes(raw_bytes[5:7], byteorder="big")
             self.height: int = int.from_bytes(raw_bytes[7:9], byteorder="big")
 
@@ -240,9 +242,13 @@ class PGStream:
     }
 
     def __init__(self, filepath: str):
+        if os.path.splitext(filepath)[1] != ".sup":
+            raise ValueError
         self.file_name: str = os.path.split(filepath)[1]
         with open(filepath, "rb") as f:
             self.raw_data: bytes = f.read()
+        self.res_height = self.display_sets[0].pcs[0].height
+        self.res_width = self.display_sets[0].pcs[0].width
 
     @cached_property
     def segments(self) -> list[BaseSegment]:
@@ -292,3 +298,13 @@ class PGStream:
             cur.append(ds)
         ep.append(Epoch(cur))
         return ep
+
+
+@dataclass
+class PGSImageObject:
+    img: Image.Image
+    x_pos: int
+    y_pos: int
+    start_ms: int
+    end_ms: int
+    pal: Palette

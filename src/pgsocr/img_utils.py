@@ -114,7 +114,7 @@ def preprocess_image(im: Image.Image) -> Image.Image:
     return canvas
 
 
-def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
+def extract_images(pgsobj: PGStream) -> Generator[PGSImageObject, None, None]:
     seen_pcs = set()
     for e in pgsobj.epochs:
         ods_cache = {}
@@ -123,7 +123,9 @@ def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
         # TODO: Implement subtitle window positioning support for future output to ASS
 
         # win_cache = {}
-        screen = {}
+        screen: dict[
+            ObjectDefinitionSegment, tuple[PaletteDefinitionSegment, int, int, int]
+        ] = {}
         for ds in e.display_sets:
             for pal in ds.pds:
                 pds_cache[pal.id] = pal
@@ -145,7 +147,7 @@ def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
                 for comp in pcs.composition_objects:
                     ods_to_use = ods_cache[comp.object_id]
                     ods_in_ds.add(ods_to_use)
-                    screen[ods_to_use] = (pds_to_use, cur_pts)
+                    screen[ods_to_use] = (pds_to_use, cur_pts, comp.x_pos, comp.y_pos)
 
                 for k, v in screen.copy().items():
                     if k not in ods_in_ds:
@@ -158,12 +160,7 @@ def extract_images(pgsobj: PGStream) -> Generator[Image.Image, int, int]:
                                 comp.crop_y_offset + comp.crop_height,
                             )
                             img = img.crop(crop_rect)
-                        yield img, v[1], cur_pts
+                        yield PGSImageObject(
+                            img, v[2], v[3], v[1], cur_pts, v[0].palette
+                        )
                         del screen[k]
-
-
-def generate_timecode(millis: int) -> str:
-    seconds, milliseconds = divmod(millis, 1000)
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"

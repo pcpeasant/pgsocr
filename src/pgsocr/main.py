@@ -49,16 +49,21 @@ def main():
         from .tesseract_ocr_engine import TesseractOCREngine
 
         engine = TesseractOCREngine(langs, args.b)
-
     elif args.m == "florence2":
         from .transformer_ocr_engines import Florence2OCREngine
 
         engine = Florence2OCREngine()
+    else:
+        raise ValueError(f"Unknown OCR engine '{args.m}' specified.")
     print("OCR engine loaded.")
+
     if args.f == "srt":
         convertor = sup2srt
     elif args.f == "ass":
         convertor = sup2ass
+    else:
+        raise ValueError(f"Unknown output format '{args.f}' specified.")
+
     if inp.is_file():
         convertor(str(inp), args.o, engine)
     elif inp.is_dir():

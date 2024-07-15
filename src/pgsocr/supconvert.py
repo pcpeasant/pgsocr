@@ -1,5 +1,4 @@
 from . import img_utils
-from PIL import ImageFont, ImageDraw, Image
 from .pgsparser import PGStream
 from tqdm import tqdm
 
@@ -13,6 +12,8 @@ def generate_timecode(millis: int, fmt: str) -> str:
     elif fmt == "ass":
         hundredths = milliseconds // 10
         return f"{hours}:{minutes:02d}:{seconds:02d}:{hundredths:02d}"
+    else:
+        raise ValueError(f"Unknown format '{fmt}' specified.")
 
 
 def sup2srt(in_path: str, out_path: str, ocr_engine) -> None:

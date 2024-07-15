@@ -45,7 +45,7 @@ class BaseSegment:
         return self.pts
 
 
-Palette = namedtuple("Palette", ["Y", "Cr", "Cb", "Alpha"])
+PaletteEntry = namedtuple("PaletteEntry", ["Y", "Cr", "Cb", "Alpha"])
 
 
 class PaletteDefinitionSegment(BaseSegment):
@@ -54,10 +54,10 @@ class PaletteDefinitionSegment(BaseSegment):
         self.id: int = self.payload[0]
         self.version: int = self.payload[1]
         # Multiple palette entries, iterate and store all
-        self.palette = [Palette(0, 0, 0, 0)] * 256
+        self.palette = [PaletteEntry(0, 0, 0, 0)] * 256
         for entry in range(len(self.payload[2:]) // 5):
             i = 2 + entry * 5
-            self.palette[self.payload[i]] = Palette(*self.payload[i + 1 : i + 5])
+            self.palette[self.payload[i]] = PaletteEntry(*self.payload[i + 1 : i + 5])
 
 
 class ObjectDefinitionSegment(BaseSegment):
@@ -104,28 +104,22 @@ class COMPOSITION_STATE(Enum):
     EPOCH_START = 0x80
 
 
+class CompositionObject:
+    def __init__(self, raw_bytes: bytes):
+        self.object_id: int = int.from_bytes(raw_bytes[0:2], byteorder="big")
+        self.window_id: int = raw_bytes[2]
+        self.is_cropped: bool = bool(raw_bytes[3] & 0x80)
+        self.is_forced: bool = bool(raw_bytes[3] & 0x40)
+        self.x_pos: int = int.from_bytes(raw_bytes[4:6], byteorder="big")
+        self.y_pos: int = int.from_bytes(raw_bytes[6:8], byteorder="big")
+        if self.is_cropped:
+            self.crop_x_offset: int = int.from_bytes(raw_bytes[8:10], byteorder="big")
+            self.crop_y_offset: int = int.from_bytes(raw_bytes[10:12], byteorder="big")
+            self.crop_width: int = int.from_bytes(raw_bytes[12:14], byteorder="big")
+            self.crop_height: int = int.from_bytes(raw_bytes[14:16], byteorder="big")
+
+
 class PresentationCompositionSegment(BaseSegment):
-
-    class CompositionObject:
-        def __init__(self, raw_bytes: bytes):
-            self.object_id: int = int.from_bytes(raw_bytes[0:2], byteorder="big")
-            self.window_id: int = raw_bytes[2]
-            self.is_cropped: bool = bool(raw_bytes[3] & 0x80)
-            self.is_forced: bool = bool(raw_bytes[3] & 0x40)
-            self.x_pos: bool = int.from_bytes(raw_bytes[4:6], byteorder="big")
-            self.y_pos: int = int.from_bytes(raw_bytes[6:8], byteorder="big")
-            if self.is_cropped:
-                self.crop_x_offset: int = int.from_bytes(
-                    raw_bytes[8:10], byteorder="big"
-                )
-                self.crop_y_offset: int = int.from_bytes(
-                    raw_bytes[10:12], byteorder="big"
-                )
-                self.crop_width: int = int.from_bytes(raw_bytes[12:14], byteorder="big")
-                self.crop_height: int = int.from_bytes(
-                    raw_bytes[14:16], byteorder="big"
-                )
-
     def __init__(self, raw_bytes: bytes):
         super().__init__(raw_bytes)
         self.width: int = int.from_bytes(self.payload[0:2], byteorder="big")
@@ -151,7 +145,7 @@ class PresentationCompositionSegment(BaseSegment):
         comps = []
         while idx < len(self.payload):
             length = 8 * (1 + bool(self.payload[idx + 3]))
-            comps.append(self.CompositionObject(self.payload[idx : idx + length]))
+            comps.append(CompositionObject(self.payload[idx : idx + length]))
             idx += length
         if len(comps) != self.num_comp_objs:
             warnings.warn(
@@ -162,16 +156,16 @@ class PresentationCompositionSegment(BaseSegment):
         return comps
 
 
+class WindowObject:
+    def __init__(self, raw_bytes: bytes):
+        self.id: int = raw_bytes[0]
+        self.x_pos: int = int.from_bytes(raw_bytes[1:3], byteorder="big")
+        self.y_pos: int = int.from_bytes(raw_bytes[3:5], byteorder="big")
+        self.width: int = int.from_bytes(raw_bytes[5:7], byteorder="big")
+        self.height: int = int.from_bytes(raw_bytes[7:9], byteorder="big")
+
+
 class WindowDefinitionSegment(BaseSegment):
-
-    class WindowObject:
-        def __init__(self, raw_bytes: bytes):
-            self.id: int = raw_bytes[0]
-            self.x_pos: int = int.from_bytes(raw_bytes[1:3], byteorder="big")
-            self.y_pos: int = int.from_bytes(raw_bytes[3:5], byteorder="big")
-            self.width: int = int.from_bytes(raw_bytes[5:7], byteorder="big")
-            self.height: int = int.from_bytes(raw_bytes[7:9], byteorder="big")
-
     def __init__(self, raw_bytes: bytes):
         super().__init__(raw_bytes)
         self.num_win_objs: int = self.payload[0]
@@ -182,7 +176,7 @@ class WindowDefinitionSegment(BaseSegment):
         windows = []
         while idx < len(self.payload):
             length = 9
-            windows.append(self.WindowObject(self.payload[idx : idx + length]))
+            windows.append(WindowObject(self.payload[idx : idx + length]))
             idx += length
         if len(windows) != self.num_win_objs:
             warnings.warn(
@@ -205,19 +199,21 @@ class DisplaySet:
 
     @property
     def pcs(self) -> list[PresentationCompositionSegment]:
-        return [s for s in self.segments if s.type == SEGMENT_TYPE.PCS]
+        return [
+            s for s in self.segments if isinstance(s, PresentationCompositionSegment)
+        ]
 
     @property
     def wds(self) -> list[WindowDefinitionSegment]:
-        return [s for s in self.segments if s.type == SEGMENT_TYPE.WDS]
+        return [s for s in self.segments if isinstance(s, WindowDefinitionSegment)]
 
     @property
     def pds(self) -> list[PaletteDefinitionSegment]:
-        return [s for s in self.segments if s.type == SEGMENT_TYPE.PDS]
+        return [s for s in self.segments if isinstance(s, PaletteDefinitionSegment)]
 
     @property
     def ods(self) -> list[ObjectDefinitionSegment]:
-        return [s for s in self.segments if s.type == SEGMENT_TYPE.ODS]
+        return [s for s in self.segments if isinstance(s, ObjectDefinitionSegment)]
 
     @property
     def composition_state(self) -> COMPOSITION_STATE:
@@ -242,8 +238,10 @@ class PGStream:
     }
 
     def __init__(self, filepath: str):
-        if os.path.splitext(filepath)[1] != ".sup":
-            raise ValueError
+        ext = os.path.splitext(filepath)[1]
+        print(ext)
+        if ext != ".sup":
+            raise ValueError(f"File with extension '{ext}' is not a valid SUP.")
         self.file_name: str = os.path.split(filepath)[1]
         with open(filepath, "rb") as f:
             self.raw_data: bytes = f.read()
@@ -307,4 +305,4 @@ class PGSImageObject:
     y_pos: int
     start_ms: int
     end_ms: int
-    pal: Palette
+    pal: list[PaletteEntry]

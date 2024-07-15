@@ -65,7 +65,7 @@ def ycbcr2rgb(ar: npt.NDArray) -> npt.NDArray[np.uint8]:
     np.putmask(rgb, rgb > 255, 255)
     # Sets any pixel value less than 0 to 0 (Min for RGB colorspace)
     np.putmask(rgb, rgb < 0, 0)
-    return np.uint8(rgb)
+    return np.uint8(rgb)  # type: ignore
 
 
 def px_rgb_a(
@@ -74,7 +74,7 @@ def px_rgb_a(
     swap: bool,
 ) -> tuple[npt.NDArray[np.uint8], npt.NDArray[np.uint8], npt.NDArray[np.uint8]]:
     px = read_rle_bytes(ods.img_data)
-    px = np.array([[255] * (ods.width - len(l)) + l for l in px], dtype=np.uint8)
+    px = np.array([[255] * (ods.width - len(l)) + l for l in px], dtype=np.uint8)  # type: ignore
 
     if swap:
         ycbcr = np.array([(entry.Y, entry.Cb, entry.Cr) for entry in pds.palette])
@@ -105,7 +105,7 @@ def preprocess_image(im: Image.Image) -> Image.Image:
     canvas = Image.new("RGB", (1000, 1000), (0, 0, 0))
     im_text = im.convert("RGB")
     # im_text = im_text.point(lambda p: 255 if p > 127 else 0)
-    im_text.thumbnail((750, 750), resample=Image.LANCZOS)
+    im_text.thumbnail((750, 750))
     bg_width, bg_height = canvas.size
     fg_width, fg_height = im_text.size
     position = ((bg_width - fg_width) // 2, (bg_height - fg_height) // 2)
@@ -117,15 +117,10 @@ def preprocess_image(im: Image.Image) -> Image.Image:
 def extract_images(pgsobj: PGStream) -> Generator[PGSImageObject, None, None]:
     seen_pcs = set()
     for e in pgsobj.epochs:
-        ods_cache = {}
-        pds_cache = {}
+        ods_cache: dict[int, ObjectDefinitionSegment] = {}
+        pds_cache: dict[int, PaletteDefinitionSegment] = {}
 
-        # TODO: Implement subtitle window positioning support for future output to ASS
-
-        # win_cache = {}
-        screen: dict[
-            ObjectDefinitionSegment, tuple[PaletteDefinitionSegment, int, int, int]
-        ] = {}
+        screen: dict[ObjectDefinitionSegment, PGSImageObject] = {}
         for ds in e.display_sets:
             for pal in ds.pds:
                 pds_cache[pal.id] = pal
@@ -133,34 +128,33 @@ def extract_images(pgsobj: PGStream) -> Generator[PGSImageObject, None, None]:
             for obj in ds.ods:
                 ods_cache[obj.id] = obj
 
-            # for win in ds.wds:
-            #     for winobj in win.window_objects:
-            #         win_cache[winobj.id] = winobj
-
             pcs = ds.pcs[0]
             cur_pts = pcs.presentation_timestamp
-            pds_to_use = pds_cache[ds.pcs[0].palette_id]
+            pds_to_use = pds_cache[pcs.palette_id]
 
             ods_in_ds = set()
-            if pcs.composition_number not in seen_pcs:
-                seen_pcs.add(pcs.composition_number)
-                for comp in pcs.composition_objects:
-                    ods_to_use = ods_cache[comp.object_id]
-                    ods_in_ds.add(ods_to_use)
-                    screen[ods_to_use] = (pds_to_use, cur_pts, comp.x_pos, comp.y_pos)
+            if pcs.composition_number in seen_pcs:
+                continue
+            seen_pcs.add(pcs.composition_number)
+            for comp in pcs.composition_objects:
+                ods_to_use = ods_cache[comp.object_id]
+                img = make_image(ods_to_use, pds_to_use)
+                if comp.is_cropped:
+                    crop_rect = (
+                        comp.crop_x_offset,
+                        comp.crop_y_offset,
+                        comp.crop_x_offset + comp.crop_width,
+                        comp.crop_y_offset + comp.crop_height,
+                    )
+                    img = img.crop(crop_rect)
 
-                for k, v in screen.copy().items():
-                    if k not in ods_in_ds:
-                        img = make_image(k, v[0])
-                        if comp.is_cropped:
-                            crop_rect = (
-                                comp.crop_x_offset,
-                                comp.crop_y_offset,
-                                comp.crop_x_offset + comp.crop_width,
-                                comp.crop_y_offset + comp.crop_height,
-                            )
-                            img = img.crop(crop_rect)
-                        yield PGSImageObject(
-                            img, v[2], v[3], v[1], cur_pts, v[0].palette
-                        )
-                        del screen[k]
+                ods_in_ds.add(ods_to_use)
+                screen[ods_to_use] = PGSImageObject(
+                    img, comp.x_pos, comp.y_pos, cur_pts, -1, pds_to_use.palette
+                )
+
+            for k, v in screen.copy().items():
+                if k not in ods_in_ds:
+                    v.end_ms = cur_pts
+                    yield v
+                    del screen[k]

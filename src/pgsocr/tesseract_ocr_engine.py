@@ -30,7 +30,7 @@ class TesseractOCREngine:
                 )
                 exit(1)
         langstring = "+".join(l for l in languages)
-        self.engine = PyTessBaseAPI(lang=langstring)
+        self.engine = PyTessBaseAPI(lang=langstring)  # type: ignore
         self.engine.SetVariable("debug_file", os.devnull)
         self.engine.SetVariable("psm", "6")
         if blacklist:

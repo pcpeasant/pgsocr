@@ -1,5 +1,5 @@
 # pgsocr
-Convert Blu-Ray SUP subtitles to SRT using AI Language Models or Tesseract.
+Convert Blu-Ray SUP subtitles to SRT or ASS using AI Language Models or Tesseract.
 
 ### Prerequisites
 

@@ -2,34 +2,28 @@ from pathlib import Path
 import os
 from PIL import Image
 
-from tesserocr import PyTessBaseAPI
+from tesserocr import PyTessBaseAPI, get_languages
 
 
 class TesseractOCREngine:
-    def __init__(self, languages, blacklist):
-        if "TESSDATA_PREFIX" not in os.environ:
-            print("Please set the TESSDATA_PREFIX environment variable first.")
-            exit(1)
-        tesspath = Path(os.environ["TESSDATA_PREFIX"])
-        if not tesspath.exists() or not tesspath.is_dir():
+    def __init__(self, requested_languages: list[str], blacklist: str):
+        tesspath, available_languages = get_languages()
+        tesspath = Path(tesspath)
+        if not tesspath.exists() or not available_languages:
             print(
-                "Invalid tessdata path specified, make sure you have set the TESSDATA_PREFIX environment variable correctly."
+                f"Invalid tessdata path specified or the folder \"{tesspath.absolute()}\" doesn't contain any .traineddata file."
+                " Make sure you have set the TESSDATA_PREFIX environment variable correctly."
             )
             exit(1)
-        langfiles = list(map(lambda x: x.name, tesspath.glob("*.traineddata")))
-        if not langfiles:
-            print(
-                "No language packs found, please make sure you have set the TESSDATA_PREFIX environment variable correctly."
-            )
-            exit(1)
-        for l in languages:
-            if f"{l}.traineddata" not in langfiles:
+
+        for l in requested_languages:
+            if l not in available_languages:
                 print(
                     f"Failed to load language '{l}', make sure you have specified the correct language code"
                     " and that the corresponding Tesseract language pack is installed on your system."
                 )
                 exit(1)
-        langstring = "+".join(l for l in languages)
+        langstring = "+".join(l for l in requested_languages)
         self.engine = PyTessBaseAPI(lang=langstring)  # type: ignore
         self.engine.SetVariable("debug_file", os.devnull)
         self.engine.SetVariable("psm", "6")

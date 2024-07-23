@@ -18,7 +18,7 @@ Make sure to install the [lm] extras if you want to use AI models.
     -i: Specify the path to the SUP file or (batch mode) directory.
     -o: Specify the path to the output directory.
     -m: Specify the OCR engine to use (florence2 or tesseract).
-    -l: (Only if using Tesseract) Specify the list of languages to use separated by commas. Defaults to English.
+    -l: (Only if using Tesseract) Specify the list of languages to use separated by spaces. Defaults to English.
     -b: (Only if using Tesseract) Specify a custom character blacklist for Tesseract. Enter an empty string to turn off the default blacklist.
     -f: Specify the output format (SRT or ASS). ASS output also has support for subtitle positioning.
 
@@ -26,7 +26,7 @@ Make sure to install the [lm] extras if you want to use AI models.
 
     Examples:
     # Single file
-    pgsocr -i /path/to/file -o path/to/outputdir -t /path/to/tessdata -m tesseract -l eng,jpn
+    pgsocr -i /path/to/file -o path/to/outputdir -t /path/to/tessdata -m tesseract -l eng jpn
 
     # Multiple files in a directory
     pgsocr -i /path/to/inputdir -o /path/to/outputdir -t /path/to/tessdata -m florence2

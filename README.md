@@ -26,7 +26,7 @@ Make sure to install the [lm] extras if you want to use AI models.
 
     Examples:
     # Single file
-    pgsocr -i /path/to/file -o path/to/outputdir -t /path/to/tessdata -m tesseract -l eng jpn
+    pgsocr -i /path/to/file -o path/to/outputdir -m tesseract -l eng jpn
 
     # Multiple files in a directory
-    pgsocr -i /path/to/inputdir -o /path/to/outputdir -t /path/to/tessdata -m florence2
+    pgsocr -i /path/to/inputdir -o /path/to/outputdir -m florence2

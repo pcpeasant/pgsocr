@@ -25,7 +25,12 @@ def main():
         choices=["srt", "ass"],
         default="srt",
     )
-    parser.add_argument("-l", help="Specify the languages to be used.", default="eng")
+    parser.add_argument(
+        "-l",
+        nargs='+',
+        help="Specify the languages to be used.",
+        default=["eng"]
+    )
     parser.add_argument(
         "-b", help="Specify a custom character blacklist", default="|`´®"
     )
@@ -42,7 +47,7 @@ def main():
         )
         exit(1)
 
-    langs = [s.strip() for s in args.l.split(",")]
+    langs = args.l
 
     print("Loading OCR engine...")
     if args.m == "tesseract":

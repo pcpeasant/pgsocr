@@ -239,7 +239,6 @@ class PGStream:
 
     def __init__(self, filepath: str):
         ext = os.path.splitext(filepath)[1]
-        print(ext)
         if ext != ".sup":
             raise ValueError(f"File with extension '{ext}' is not a valid SUP.")
         self.file_name: str = os.path.split(filepath)[1]

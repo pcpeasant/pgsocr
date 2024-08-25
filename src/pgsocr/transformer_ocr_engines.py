@@ -1,5 +1,5 @@
 from PIL import Image
-from transformers import AutoProcessor, AutoModelForCausalLM
+from transformers import AutoProcessor, AutoModelForCausalLM, AutoModel, AutoTokenizer
 import os
 import torch
 
@@ -9,10 +9,9 @@ from transformers.dynamic_module_utils import get_imports
 
 
 def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
-    if not str(filename).endswith("modeling_florence2.py"):
-        return get_imports(filename)
     imports = get_imports(filename)
-    imports.remove("flash_attn")
+    if not torch.cuda.is_available() and "flash_attn" in imports:
+        imports.remove("flash_attn")
     return imports
 
 
@@ -49,6 +48,30 @@ class Florence2OCREngine:
         return "\n".join(
             s.replace("</s>", "").strip() for s in parsed_answer[task_prompt]["labels"]
         )
+
+    def quit(self):
+        pass
+
+class MiniCPMVOCREngine:
+    def __init__(self):
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        model_id = "openbmb/MiniCPM-V-2_6"
+        with patch(
+            "transformers.dynamic_module_utils.get_imports", fixed_get_imports
+        ):  # workaround for unnecessary flash_attn requirement
+            self.model = AutoModel.from_pretrained(model_id, trust_remote_code=True,
+    attn_implementation='sdpa', torch_dtype=torch.bfloat16).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+
+    def get_ocr_text(self, im: Image.Image):
+        question = 'What text is in the image? Respond with just the text.'
+        msgs = [{'role': 'user', 'content': [im, question]}]
+        res = self.model.chat(
+            image=None,
+            msgs=msgs,
+            tokenizer=self.tokenizer
+        )
+        return res
 
     def quit(self):
         pass

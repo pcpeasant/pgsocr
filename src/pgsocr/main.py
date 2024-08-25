@@ -30,7 +30,7 @@ def main():
     parser.add_argument(
         "-m",
         help="Specify the OCR model to use.",
-        choices=["tesseract", "florence2"],
+        choices=["tesseract", "florence2", "minicpmv"],
         default="tesseract",
     )
     parser.add_argument(
@@ -72,6 +72,10 @@ def main():
         from .transformer_ocr_engines import Florence2OCREngine
 
         engine = Florence2OCREngine()
+    elif args.m == "minicpmv":
+        from .transformer_ocr_engines import MiniCPMVOCREngine
+
+        engine = MiniCPMVOCREngine()
     else:
         raise ValueError(f"Unknown OCR engine '{args.m}' specified.")
     print("OCR engine loaded.")

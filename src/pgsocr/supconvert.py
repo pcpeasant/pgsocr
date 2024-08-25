@@ -72,7 +72,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         posx = img_obj.x_pos + (img_obj.img.width) // 2
         posy = img_obj.y_pos + (img_obj.img.height) // 2
         assfile.write(
-            f"Dialogue: 0,{generate_timecode(img_obj.start_ms, 'ass')},{generate_timecode(img_obj.end_ms, 'ass')},Default,,0,0,0,,{{\\an5}}{{\pos({posx}, {posy})}}{text}\n"
+            f"Dialogue: 0,{generate_timecode(img_obj.start_ms, 'ass')},{generate_timecode(img_obj.end_ms, 'ass')},Default,,0,0,0,,{{\\an5}}{{\\pos({posx}, {posy})}}{text}\n"
         )
     ocr_engine.quit()
     assfile.close()

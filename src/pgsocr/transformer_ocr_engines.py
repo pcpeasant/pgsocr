@@ -54,12 +54,8 @@ class Florence2OCREngine:
 
 class MiniCPMVOCREngine:
     def __init__(self):
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         model_id = "openbmb/MiniCPM-V-2_6-int4"
-        with patch(
-            "transformers.dynamic_module_utils.get_imports", fixed_get_imports
-        ):  # workaround for unnecessary flash_attn requirement
-            self.model = AutoModel.from_pretrained(model_id, trust_remote_code=True).to(self.device)
+        self.model = AutoModel.from_pretrained(model_id, trust_remote_code=True)
         self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
     def get_ocr_text(self, im: Image.Image):

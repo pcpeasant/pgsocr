@@ -5,7 +5,7 @@
 groups = ["default", "lm"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:9a8aeb4f31ddf85f7338c61a961a7e78fe43df76c30b0613093425685ce10b45"
+content_hash = "sha256:dc4d8aba387e18e6ce16c74f44189c289e201927e5893614daa8e9862a893ddc"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -108,6 +108,20 @@ groups = ["lm"]
 files = [
     {file = "filelock-3.15.4-py3-none-any.whl", hash = "sha256:6ca1fffae96225dab4c6eaf1c4f4f28cd2568d3ec2a44e15a08520504de468e7"},
     {file = "filelock-3.15.4.tar.gz", hash = "sha256:2207938cbc1844345cb01a5a95524dae30f0ce089eba5b00378295a17e3e90cb"},
+]
+
+[[package]]
+name = "flash-attn"
+version = "2.6.3"
+requires_python = ">=3.8"
+summary = ""
+groups = ["lm"]
+dependencies = [
+    "einops",
+    "torch",
+]
+files = [
+    {file = "flash_attn-2.6.3.tar.gz", hash = "sha256:5bfae9500ad8e7d2937ebccb4906f3bc464d1bf66eedd0e4adabd520811c7b52"},
 ]
 
 [[package]]

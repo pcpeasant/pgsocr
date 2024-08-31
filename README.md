@@ -4,13 +4,12 @@ Convert Blu-Ray SUP subtitles to SRT or ASS using AI Language Models or Tesserac
 ### Prerequisites
 
 If planning on using Tesseract, see: https://tesseract-ocr.github.io/tessdoc/Installation.html \
-Make sure to install all the required language packs and note down the location of the 'tessdata' directory. \
-Make sure to set the TESSDATA_PREFIX environment variable to the location of the 'tessdata' directory from the previous step.
+Make sure to install all the required language packs.
 
 ### Installation
-
-Download the latest .whl from the Releases tab and install using pip. \
-Make sure to install the [lm] extras if you want to use AI models.
+    pip install pgsocr
+    or
+    pip install pgsocr[lm] (for the AI language models)
 
 ### Usage:
 

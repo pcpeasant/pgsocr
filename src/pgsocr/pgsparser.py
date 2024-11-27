@@ -45,7 +45,7 @@ class BaseSegment:
         return self.pts
 
 
-PaletteEntry = namedtuple("PaletteEntry", ["Y", "Cr", "Cb", "Alpha"])
+PaletteEntry = namedtuple("PaletteEntry", ["Y", "Cb", "Cr", "Alpha"])
 
 
 class PaletteDefinitionSegment(BaseSegment):

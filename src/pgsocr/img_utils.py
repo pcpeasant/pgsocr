@@ -69,17 +69,12 @@ def ycbcr2rgb(ar: npt.NDArray) -> npt.NDArray[np.uint8]:
 
 
 def px_rgb_a(
-    ods: ObjectDefinitionSegment,
-    pds: PaletteDefinitionSegment,
-    swap: bool,
+    ods: ObjectDefinitionSegment, pds: PaletteDefinitionSegment
 ) -> tuple[npt.NDArray[np.uint8], npt.NDArray[np.uint8], npt.NDArray[np.uint8]]:
     px = read_rle_bytes(ods.img_data)
     px = np.array([[255] * (ods.width - len(l)) + l for l in px], dtype=np.uint8)  # type: ignore
 
-    if swap:
-        ycbcr = np.array([(entry.Y, entry.Cb, entry.Cr) for entry in pds.palette])
-    else:
-        ycbcr = np.array([(entry.Y, entry.Cr, entry.Cb) for entry in pds.palette])
+    ycbcr = np.array([(entry.Y, entry.Cb, entry.Cr) for entry in pds.palette])
 
     rgb = ycbcr2rgb(ycbcr)
 
@@ -89,10 +84,8 @@ def px_rgb_a(
     return px, rgb, a
 
 
-def make_image(
-    ods: ObjectDefinitionSegment, pds: PaletteDefinitionSegment, swap: bool = False
-):
-    px, rgb, a = px_rgb_a(ods, pds, swap)
+def make_image(ods: ObjectDefinitionSegment, pds: PaletteDefinitionSegment):
+    px, rgb, a = px_rgb_a(ods, pds)
     alpha = Image.fromarray(a, mode="L")
     img = Image.fromarray(px, mode="P")
     img.putpalette(rgb)

@@ -1,6 +1,7 @@
 from . import img_utils
 from .pgsparser import PGStream
 from tqdm import tqdm
+from typing import Optional
 
 
 def generate_timecode(millis: int, fmt: str) -> str:
@@ -11,41 +12,29 @@ def generate_timecode(millis: int, fmt: str) -> str:
         return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
     elif fmt == "ass":
         hundredths = milliseconds // 10
-        return f"{hours}:{minutes:02d}:{seconds:02d}:{hundredths:02d}"
+        return f"{hours}:{minutes:02d}:{seconds:02d}.{hundredths:02d}"
     else:
         raise ValueError(f"Unknown format '{fmt}' specified.")
 
 
-def sup2srt(in_path: str, out_path: str, ocr_engine) -> None:
+def supconvert(
+    in_path: str,
+    out_path: str,
+    ocr_engine,
+    fmt: str,
+    img_dump_path: Optional[str] = None,
+) -> None:
     try:
         supfile = PGStream(in_path)
     except ValueError:
         print(f"{in_path} is not a SUP file.")
         return
-    srtfile = open(f"{out_path}/{supfile.file_name.split('.')[0]}.srt", "w")
-    seq_num = 1
-    for img_obj in tqdm(
-        img_utils.extract_images(supfile), desc=f"{supfile.file_name}", unit="lines"
-    ):
-        text = ocr_engine.get_ocr_text(img_utils.preprocess_image(img_obj.img))
-        srtfile.write(
-            f"{seq_num}\n{generate_timecode(img_obj.start_ms, 'srt')} --> {generate_timecode(img_obj.end_ms, 'srt')}\n{text}\n\n"
-        )
-        seq_num += 1
 
-    ocr_engine.quit()
-    srtfile.close()
-
-
-def sup2ass(in_path: str, out_path: str, ocr_engine) -> None:
-    try:
-        supfile = PGStream(in_path)
-    except ValueError:
-        print(f"{in_path} is not a SUP file.")
-        return
-    assfile = open(f"{str(out_path)}/{supfile.file_name.split('.')[0]}.ass", "w")
-    assfile.write(
-        f"""
+    file_name = supfile.file_name.split(".")[0]
+    outfile = open(f"{out_path}/{file_name}.{fmt}", "w", buffering=1)
+    if fmt == "ass":
+        outfile.write(
+            f"""
 [Script Info]
 ScriptType: v4.00+
 WrapStyle: 0
@@ -63,16 +52,30 @@ Style: Default,LTFinnegan Medium,72,&H00FFFFFF,&H00FFFFFF,&H00000000,&HA0000000,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
-    )
+        )
+
+    seq_num = 1
     for img_obj in tqdm(
         img_utils.extract_images(supfile), desc=f"{supfile.file_name}", unit="lines"
     ):
+        if img_dump_path is not None:
+            img_obj.img.save(
+                f"{img_dump_path}/{img_obj.start_ms}-{img_obj.end_ms}_{seq_num}.png"
+            )
         text = ocr_engine.get_ocr_text(img_utils.preprocess_image(img_obj.img))
-        text = text.replace("\n", "\\N")
-        posx = img_obj.x_pos + (img_obj.img.width) // 2
-        posy = img_obj.y_pos + (img_obj.img.height) // 2
-        assfile.write(
-            f"Dialogue: 0,{generate_timecode(img_obj.start_ms, 'ass')},{generate_timecode(img_obj.end_ms, 'ass')},Default,,0,0,0,,{{\\an5}}{{\\pos({posx}, {posy})}}{text}\n"
-        )
+
+        if fmt == "srt":
+            outfile.write(
+                f"{seq_num}\n{generate_timecode(img_obj.start_ms, 'srt')} --> {generate_timecode(img_obj.end_ms, 'srt')}\n{text}\n\n"
+            )
+            seq_num += 1
+        elif fmt == "ass":
+            text = text.replace("\n", "\\N")
+            posx = img_obj.x_pos + (img_obj.img.width) // 2
+            posy = img_obj.y_pos + (img_obj.img.height) // 2
+            outfile.write(
+                f"Dialogue: 0,{generate_timecode(img_obj.start_ms, 'ass')},{generate_timecode(img_obj.end_ms, 'ass')},Default,,0,0,0,,{{\\an5}}{{\\pos({posx}, {posy})}}{text}\n"
+            )
+
     ocr_engine.quit()
-    assfile.close()
+    outfile.close()

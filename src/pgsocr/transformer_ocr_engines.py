@@ -1,5 +1,5 @@
 from PIL import Image
-from transformers import AutoProcessor, AutoModelForCausalLM, AutoModel, AutoTokenizer
+from transformers import AutoProcessor, AutoModelForCausalLM
 import os
 import torch
 
@@ -48,25 +48,6 @@ class Florence2OCREngine:
         return "\n".join(
             s.replace("</s>", "").strip() for s in parsed_answer[task_prompt]["labels"]
         )
-
-    def quit(self):
-        pass
-
-class MiniCPMVOCREngine:
-    def __init__(self):
-        model_id = "openbmb/MiniCPM-V-2_6-int4"
-        self.model = AutoModel.from_pretrained(model_id, trust_remote_code=True)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-
-    def get_ocr_text(self, im: Image.Image):
-        question = 'What text is in the image? Respond with just the text.'
-        msgs = [{'role': 'user', 'content': [im, question]}]
-        res = self.model.chat(
-            image=None,
-            msgs=msgs,
-            tokenizer=self.tokenizer
-        )
-        return res
 
     def quit(self):
         pass

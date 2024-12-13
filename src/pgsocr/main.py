@@ -1,7 +1,7 @@
 import argparse
 import textwrap
 from pathlib import Path
-from .supconvert import supconvert
+from pgsocr.supconvert import supconvert
 
 
 def main():

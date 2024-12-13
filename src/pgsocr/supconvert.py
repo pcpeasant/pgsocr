@@ -1,5 +1,5 @@
-from . import img_utils
-from .pgsparser import PGStream
+from pgsocr import img_utils
+from pgsocr.pgsparser import PGStream
 from tqdm import tqdm
 from typing import Optional
 
